@@ -41,5 +41,8 @@ module hamming_decoder(
     wire s2 = c2 ^ c3 ^ c6 ^ c7;
     wire s3 = c4 ^ c5 ^ c6 ^ c7;
     
+    wire [2:0] syn = {s3, s2, s1};
+
+    
     
 endmodule
