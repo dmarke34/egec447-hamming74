@@ -1,28 +1,64 @@
-# EGCP 447 — Hamming (7,4) ECC on the Arty Z7
+# EGCP 447 Hamming (7,4) Project Conventions
 
-Registered Hamming (7,4) encoder and decoder with single-bit error correction,
-error injection from push buttons, and a syndrome display on RGB LED4.
+## Bit ordering
 
-## Layout
+| Signal | Width | Layout (MSB to LSB) | Notes |
+|---|---|---|---|
+| data | [3:0] | d1 d2 d3 d4 | d1 = data[3], d4 = data[0] |
+| codeword | [6:0] | p1 p2 d1 p3 d2 d3 d4 | Position k (1 to 7, left to right) is bit 7 − k. Position 1 = cw[6], position 7 = cw[0]. |
+| err_mask | [6:0] | Same order as the codeword | A 1 flips that position. 0000100 flips position 5 (d2). |
+| syndrome | [2:0] | s3 s2 s1 | Its binary value is the error position. 000 means no error. |
 
-| Folder | Contents |
-|---|---|
-| `src/` | `hamming_encoder.v`, `hamming_decoder.v`, `hamming_system.v`, `hamming_top.v` |
-| `sim/` | Self-checking testbenches for the encoder, decoder and full system |
-| `constraints/` | `arty_z7_hamming.xdc` (clk, sw, btn, led, RGB LED4) |
-| `vivado/` | Vivado project (not tracked by git) |
+## Equations
 
-## Conventions
+**Parity bits (encoder, even parity):**
 
-- `data[3:0] = {d1, d2, d3, d4}`
-- `codeword[6:0] = {p1, p2, d1, p3, d2, d3, d4}`; position k (1..7, left to right) is bit `7-k`
-- `syndrome[2:0] = {s3, s2, s1}`; its value is the error position
-- BTN2 flips position 1 (p1), BTN3 flips position 5 (d2)
+- p1 = d1 ⊕ d2 ⊕ d4 (covers positions 1, 3, 5, 7)
+- p2 = d1 ⊕ d3 ⊕ d4 (covers positions 2, 3, 6, 7)
+- p3 = d2 ⊕ d3 ⊕ d4 (covers positions 4, 5, 6, 7)
 
-## Vivado setup
+**Syndrome (decoder, on received bits c1 to c7):**
 
-1. Create the project inside `vivado/`. Part: `xc7z020clg400-1` (Z7-20) or `xc7z010clg400-1` (Z7-10).
-2. Add `src/*.v` as design sources and `constraints/arty_z7_hamming.xdc` as constraints,
-   with **Copy sources into project unchecked** so edits land in this repo.
-3. Add `sim/*.v` as simulation sources. Set a testbench as top and run Behavioral Simulation;
-   each prints `TEST PASSED` in the Tcl console.
+- s1 = c1 ⊕ c3 ⊕ c5 ⊕ c7
+- s2 = c2 ⊕ c3 ⊕ c6 ⊕ c7
+- s3 = c4 ⊕ c5 ⊕ c6 ⊕ c7
+
+The decoder flips the bit at position {s3 s2 s1}, then reads data from positions 3, 5, 6 and 7.
+
+## Module interfaces
+
+| Module | Inputs | Outputs |
+|---|---|---|
+| hamming_encoder | clk, rst, data_in[3:0] | cw_out[6:0] |
+| hamming_decoder | clk, rst, cw_in[6:0] (codeword = cw) | data_out[3:0], corrected, syndrome[2:0] |
+| hamming_system | clk, rst, data_in[3:0], err_mask[6:0] | tx_cw[6:0], rx_cw[6:0], data_out[3:0], corrected, syndrome[2:0] |
+| hamming_top | clk, sw[1:0], btn[3:0] | led[3:0], led4_r, led4_g, led4_b |
+
+## Timing and reset
+
+- All outputs are registered on the rising edge of clk.
+- rst is asynchronous and active-high in the encoder and decoder. It must be shown working in simulation.
+- On the board, rst is tied to 0 in hamming_top (the handout allows this).
+- Latency from data_in to data_out is 2 clock cycles. Testbenches must wait at least that long before checking.
+- Board clock is 125 MHz (8 ns period).
+
+## Corrected flag
+
+corrected is 1 only when the syndrome points at a data position (3, 5, 6 or 7). For a parity-bit error at position 1, 2 or 4, the bit is still fixed but corrected stays 0.
+
+## Board mapping
+
+| Board part | Signal | Expected result |
+|---|---|---|
+| SW0, SW1 | data[0], data[1] | Data input |
+| BTN0, BTN1 | data[2], data[3] | Data input, 1 while pressed |
+| BTN2 | err_mask = 1000000 | Flips position 1 (p1). RGB shows red (syndrome 001). |
+| BTN3 | err_mask = 0000100 | Flips position 5 (d2). RGB shows magenta (syndrome 101). |
+| LED0 to LED3 | data_out[0] to data_out[3] | Always match the input for zero or one error |
+| RGB LED4 | red = s1, green = s2, blue = s3 | Off when there is no error |
+
+## References
+
+- [Hamming(7,4), Wikipedia](https://en.wikipedia.org/wiki/Hamming(7,4))
+- [Hamming code, Michael Dipperstein](https://michaeldipperstein.github.io/hamming.html)
+- [Verilog operators, ChipVerify](https://chipverify.com/verilog/verilog-operators)
