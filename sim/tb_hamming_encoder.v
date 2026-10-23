@@ -55,13 +55,16 @@ module tb_hamming_encoder;
             @(negedge clk) data_in = i; //change input on falling edge
             @(posedge clk) #1; //wait for the register to update
             $display("data=%b  cw=%b", data_in, cw_out);
-        end
 
-        // async reset test: assert reset between clock edges
-        @(posedge clk) #2;     
-        rst = 1;
-        #1 $display("after async reset: cw=%b (expect 0000000)", cw_out);
-        #10 rst = 0;
+            // async reset test mid-run: on iteration 7 (data = 0111),
+            // assert reset between clock edges and check it clears immediately
+            if (i == 7) begin
+                @(posedge clk) #2;      // land between clock edges
+                rst = 1;
+                #1 $display("  async reset mid-run: cw=%b (expect 0000000)", cw_out);
+                #10 rst = 0;            // release reset; loop continues with i = 8
+            end
+        end
         
         #20 $finish;
     end
