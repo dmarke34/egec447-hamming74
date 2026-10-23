@@ -59,5 +59,7 @@ module hamming_decoder(
         endcase
     end
     
+    wire data_err = (syn == 3'd3) || (syn == 3'd5) || (syn == 3'd6) || (syn == 3'd7); 
+    
     
 endmodule
