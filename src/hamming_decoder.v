@@ -61,5 +61,16 @@ module hamming_decoder(
     
     wire data_err = (syn == 3'd3) || (syn == 3'd5) || (syn == 3'd6) || (syn == 3'd7); 
     
-    
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            //clear the outputs
+            data_out  <= 4'b0000;
+            corrected <= 1'b0;
+            syndrome  <= 3'b000;
+        end else begin
+            data_out  <= {fixed[4], fixed[2], fixed[1], fixed[0]}; //extract d1 d2 d3 d4
+            corrected <= data_err;
+            syndrome  <= syn;
+        end
+    end
 endmodule
