@@ -57,6 +57,26 @@ corrected is 1 only when the syndrome points at a data position (3, 5, 6 or 7). 
 | LED0 to LED3 | data_out[0] to data_out[3] | Always match the input for zero or one error |
 | RGB LED4 | red = s1, green = s2, blue = s3 | Off when there is no error |
 
+## Encoder results
+
+### RTL schematic
+
+Vivado's elaborated design for `hamming_encoder`: each 3-input parity XOR becomes two 2-input XOR gates, feeding a 7-bit register with asynchronous clear (`RTL_REG_ASYNC`).
+
+![Encoder RTL schematic](docs/images/encoder_rtl_schematic.png)
+
+### Simulation waveform
+
+`tb_hamming_encoder` steps `data_in` through all 16 values. At about 94 ns, `rst` is asserted between clock edges while `data_in = 0111`, and `cw_out` clears from `0001111` to `0000000` immediately, confirming the reset is asynchronous. After `rst` is released, the encoder resumes normal operation.
+
+![Encoder waveform with mid-run async reset](docs/images/encoder_waveform_async_reset.png)
+
+### Tcl console output
+
+All 16 codewords match the Hamming (7,4) table, and the mid-run reset check reads `0000000`.
+
+![Encoder simulation console output](docs/images/encoder_tcl_console.png)
+
 ## References
 
 - [Hamming(7,4), Wikipedia](https://en.wikipedia.org/wiki/Hamming(7,4))
