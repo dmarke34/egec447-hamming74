@@ -106,6 +106,14 @@ At about 54 ns `rst` is asserted between clock edges, and `data_out`, `syndrome`
 
 ![Decoder waveform at the async reset](docs/images/decoder_waveform_async_reset.png)
 
+## System results
+
+### RTL schematic
+
+`hamming_system` connects the two modules through the error-injection XOR. The encoder's `cw_out` drives `tx_cw`, which feeds the XOR together with `err_mask`. The XOR output is `rx_cw`, and it goes into the decoder's `cw_in`. `clk` and `rst` are shared by both modules, and `tx_cw` and `rx_cw` are brought out as ports so both codewords can be viewed in simulation.
+
+![System RTL schematic](docs/images/system_rtl_schematic.png)
+
 ## References
 
 - [Hamming(7,4), Wikipedia](https://en.wikipedia.org/wiki/Hamming(7,4))

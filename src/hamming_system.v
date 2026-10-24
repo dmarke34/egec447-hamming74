@@ -31,4 +31,24 @@ module hamming_system(
     output corrected,
     output [2:0] syndrome
     );
+    //encoder 
+    hamming_encoder enc (
+        .clk (clk),
+        .rst (rst),
+        .data_in (data_in),
+        .cw_out (tx_cw)
+    );
+    
+    //error injection
+    assign rx_cw = tx_cw ^ err_mask;
+    
+    //decoder
+    hamming_decoder dec (
+        .clk (clk),
+        .rst (rst),
+        .cw_in (rx_cw),
+        .data_out (data_out),
+        .corrected (corrected),
+        .syndrome (syndrome)
+    );
 endmodule
