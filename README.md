@@ -77,6 +77,35 @@ All 16 codewords match the Hamming (7,4) table, and the mid-run reset check read
 
 ![Encoder simulation console output](docs/images/encoder_tcl_console.png)
 
+## Decoder results
+
+All decoder tests use data `1011`, whose codeword is `0110011`.
+
+| Test | cw_in | data_out | syndrome | corrected |
+|---|---|---|---|---|
+| No error | 0110011 | 1011 | 000 | 0 |
+| Parity-bit error, position 1 (p1) | 1110011 | 1011 | 001 | 0 |
+| Data-bit error, position 5 (d2) | 0110111 | 1011 | 101 | 1 |
+| Async reset between clock edges | 0110111 | 0000 | 000 | 0 |
+
+### Tcl console output
+
+Both single-bit errors are corrected back to `1011`. The syndrome names the flipped position, and `corrected` is high only for the data-bit error.
+
+![Decoder simulation console output](docs/images/decoder_tcl_console.png)
+
+### Parity-bit error
+
+At about 36 ns the decoder receives `1110011` (p1 flipped). `data_out` stays `1011`, `syndrome` reads `001`, and `corrected` stays `0` because no data bit was damaged. At about 44 ns the d2 error (`0110111`) gives `syndrome = 101` and `corrected = 1`.
+
+![Decoder waveform at the parity-bit error](docs/images/decoder_waveform_parity_error.png)
+
+### Asynchronous reset
+
+At about 54 ns `rst` is asserted between clock edges, and `data_out`, `syndrome` and `corrected` clear to zero immediately. After `rst` is released, the decoder corrects the d2 error again on the next clock edge.
+
+![Decoder waveform at the async reset](docs/images/decoder_waveform_async_reset.png)
+
 ## References
 
 - [Hamming(7,4), Wikipedia](https://en.wikipedia.org/wiki/Hamming(7,4))
