@@ -114,6 +114,37 @@ At about 54 ns `rst` is asserted between clock edges, and `data_out`, `syndrome`
 
 ![System RTL schematic](docs/images/system_rtl_schematic.png)
 
+### End-to-end simulation
+
+`tb_hamming_system` sends data `1011` through encoder, error XOR and decoder. Data passes through two registers, so `data_out` follows `data_in` two clock cycles later.
+
+| Time | err_mask | tx_cw | rx_cw | data_out | syndrome | corrected |
+|---|---|---|---|---|---|---|
+| ~36 ns | 0000000 (no error) | 0110011 | 0110011 | 1011 | 000 | 0 |
+| ~44 ns | 1000000 (flip p1) | 0110011 | 1110011 | 1011 | 001 | 0 |
+| ~60 ns | 0000100 (flip d2) | 0110011 | 0110111 | 1011 | 101 | 1 |
+| ~78 ns | rst asserted mid-cycle | 0000000 | 0000100 | 0000 | 000 | 0 |
+
+`tx_cw` stays at the clean codeword while `rx_cw` shows each injected bit flip, and `data_out` stays `1011`: the single-bit error is corrected end to end. `corrected` is low for the parity-bit error and high for the data-bit error. When `rst` is asserted between clock edges, both the encoder and decoder outputs clear immediately; `rx_cw` reads `0000100` during reset because the XOR is combinational and still applies the mask. After reset is released, the pipeline refills and `data_out` returns to `1011`.
+
+![System end-to-end waveform](docs/images/system_waveform.png)
+
+### Tcl console output
+
+![System simulation console output](docs/images/system_tcl_console.png)
+
+### Data-bit error corrected
+
+Cursor at about 61 ns: `err_mask = 0000100` flips d2, so `rx_cw = 0110111`. The decoder reports `syndrome = 101` and `corrected = 1`, and `data_out` is still `1011`.
+
+![System waveform at the data-bit error](docs/images/system_waveform_data_error.png)
+
+### Asynchronous reset
+
+Cursor at about 79 ns: `rst` is high between clock edges, and `tx_cw`, `data_out`, `syndrome` and `corrected` are already zero. `rx_cw` reads `0000100` because the mask is still applied to the cleared codeword.
+
+![System waveform at the async reset](docs/images/system_waveform_async_reset.png)
+
 ## References
 
 - [Hamming(7,4), Wikipedia](https://en.wikipedia.org/wiki/Hamming(7,4))
