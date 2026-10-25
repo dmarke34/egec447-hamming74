@@ -145,6 +145,20 @@ Cursor at about 79 ns: `rst` is high between clock edges, and `tx_cw`, `data_out
 
 ![System waveform at the async reset](docs/images/system_waveform_async_reset.png)
 
+## Top level (Arty Z7)
+
+### RTL schematic
+
+`hamming_top` connects the board pins to `hamming_system`. `btn[1:0]` and `sw[1:0]` form `data_in`, and `btn[2]` and `btn[3]` form `err_mask` (positions 1 and 5). `rst` is tied to ground, since the board has no spare reset button. `data_out` drives `led[3:0]`, and the three syndrome bits drive `led4_r`, `led4_g` and `led4_b`. `corrected`, `tx_cw` and `rx_cw` are marked n/c (not connected) because they are used only in simulation.
+
+![Top-level RTL schematic](docs/images/top_rtl_schematic.png)
+
+### Timing
+
+After implementation, the design meets the 125 MHz (8 ns) clock with margin: worst negative slack is 5.200 ns, worst hold slack is 0.197 ns, and there are no failing endpoints. The slowest register-to-register path takes about 2.8 ns of the 8 ns period.
+
+![Implementation timing summary](docs/images/top_timing_summary.png)
+
 ## References
 
 - [Hamming(7,4), Wikipedia](https://en.wikipedia.org/wiki/Hamming(7,4))
