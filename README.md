@@ -1,5 +1,7 @@
 # EGCP 447 Hamming (7,4) Project Conventions
 
+**Target board:** Digilent Arty Z7-10 (part `xc7z010clg400-1`)
+
 ## Bit ordering
 
 | Signal | Width | Layout (MSB to LSB) | Notes |
@@ -155,7 +157,7 @@ Cursor at about 79 ns: `rst` is high between clock edges, and `tx_cw`, `data_out
 
 ### Timing
 
-After implementation, the design meets the 125 MHz (8 ns) clock with margin: worst negative slack is 5.200 ns, worst hold slack is 0.197 ns, and there are no failing endpoints. The slowest register-to-register path takes about 2.8 ns of the 8 ns period.
+After implementation on the Arty Z7-10 (`xc7z010clg400-1`), the design meets the 125 MHz (8 ns) clock with margin: worst negative slack is 5.322 ns, worst hold slack is 0.344 ns, and there are no failing endpoints. The slowest register-to-register path takes about 2.7 ns of the 8 ns period.
 
 ![Implementation timing summary](docs/images/top_timing_summary.png)
 
